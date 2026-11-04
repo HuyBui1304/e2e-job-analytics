@@ -1,0 +1,7 @@
+.venv/
+data/
+logs/
+.env
+dbt_jobs/target/
+dbt_jobs/logs/
+__pycache__/

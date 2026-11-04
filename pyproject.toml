@@ -1,0 +1,10 @@
+[project]
+name = "e2e-job-analytics"
+version = "0.1.0"
+description = "Pipeline dữ liệu việc làm: crawl → Bronze → Silver → Gold → Power BI"
+readme = "README.md"
+authors = [
+    { name = "Minh Huy", email = "huybm.ds@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
