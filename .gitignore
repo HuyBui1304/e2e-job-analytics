@@ -1,7 +1,10 @@
 .venv/
 data/
+jars/
 logs/
 .env
-dbt_jobs/target/
-dbt_jobs/logs/
 __pycache__/
+.pytest_cache/
+spark-warehouse/
+metastore_db/
+derby.log
