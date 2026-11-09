@@ -73,6 +73,17 @@ class BaseCrawler:
     def parse_detail(self, html: str, url: str | None = None) -> dict | None:
         raise NotImplementedError
 
+    def after_open(self, url: str) -> None:
+        pass
+
+    def wait_for(self, selector: str, timeout: int = 20) -> bool:
+        try:
+            self.sb.wait_for_element(selector, timeout=timeout)
+            return True
+        except Exception:
+            print(f"  Chờ {timeout}s vẫn chưa thấy {selector}")
+            return False
+
     def pause(self) -> None:
         self.sb.sleep(random.uniform(*self.page_sleep))
 
@@ -97,12 +108,11 @@ class BaseCrawler:
         for attempt in range(1, self.open_retries + 1):
             try:
                 self.sb.uc_open_with_reconnect(url, 4)
-                if self.is_challenge():
-                    if manual and self.wait_for_human():
-                        return self.sb.get_page_source()
+                if self.is_challenge() and not (manual and self.wait_for_human()):
                     print(f"  Bị chặn (lần {attempt}/{self.open_retries}), nghỉ {60 * attempt}s")
                     self.sb.sleep(60 * attempt)
                     continue
+                self.after_open(url)
                 return self.sb.get_page_source()
             except Exception as e:
                 print(f"  Lỗi mở trang (lần {attempt}/{self.open_retries}): {e}")
