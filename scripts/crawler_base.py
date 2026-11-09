@@ -8,6 +8,8 @@ from pathlib import Path
 
 from seleniumbase import SB
 
+from src.utils.minio_client import get_s3
+
 DEBUG_DIR = Path("data/debug")
 LANDING_DIR = Path("data/landing")
 CHALLENGE_TITLES = ("just a moment", "chờ một chút", "xác minh", "verify")
@@ -202,8 +204,18 @@ class BaseCrawler:
             self.pause()
         return jobs
 
+    landing_bucket = "landing"
+
+    def landing_key(self, run_date: date) -> str:
+        return f"source={self.source}/ingest_date={run_date.isoformat()}/jobs.jsonl"
+
     def landing_path(self, run_date: date) -> Path:
-        return LANDING_DIR / f"source={self.source}" / f"ingest_date={run_date.isoformat()}" / "jobs.jsonl"
+        return LANDING_DIR / self.landing_key(run_date)
+
+    def upload_to_minio(self, path: Path, run_date: date) -> str:
+        key = self.landing_key(run_date)
+        get_s3().upload_file(str(path), self.landing_bucket, key)
+        return f"s3a://{self.landing_bucket}/{key}"
 
     def run(self, run_date: date, limit: int | None = None, max_pages: int | None = None) -> Path:
         links = self.crawl_links(max_pages, stop_after=limit)
@@ -217,6 +229,8 @@ class BaseCrawler:
         save_jsonl(jobs, out)
         print(f"\nĐã lưu {len(jobs)}/{len(links)} job vào {out}")
         print_fill_rate(jobs)
+        uri = self.upload_to_minio(out, run_date)
+        print(f"Đã upload lên MinIO: {uri}")
         return out
 
 

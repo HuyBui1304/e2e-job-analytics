@@ -38,14 +38,14 @@ OTHER_LABELS = {
 
 def parse_boxes(soup) -> dict:
     out = {}
-    for item in soup.select(".detail-box li, .detail-box .map, .info-career ul.info li"):
-        field = BOX_LABELS.get(norm(text_of(item, "strong, b")))
+    for item in soup.select(".detail-box li, .detail-box .map, .info-career ul.info li, tr:has(> td.name)"):
+        field = BOX_LABELS.get(norm(text_of(item, "td.name") or text_of(item, "strong, b")))
         if not field or field in out:
             continue
         if field == "job_categories":
-            value = [a.get_text(" ", strip=True) for a in item.select("p a, .value a")]
+            value = [a.get_text(" ", strip=True) for a in item.select("p a, .value a, td.content a")]
         else:
-            value = text_of(item, "p, .value")
+            value = text_of(item, "td.content") or text_of(item, "p, .value")
         if value:
             out[field] = value
     if out.get("salary"):
@@ -160,14 +160,14 @@ class CareerVietCrawler(BaseCrawler):
         soup = BeautifulSoup(html, "lxml")
         ld = parse_jsonld(soup)
 
-        job_title = text_of(soup, ".job-desc h1.title") or text_of(soup, "h1")
+        job_title = text_of(soup, ".job-desc h1.title") or text_of(soup, "h1") or text_of(soup, ".head-template .title h2")
         if not job_title:
             return None
 
         box = parse_boxes(soup)
         sections = parse_sections(soup)
         other = sections.pop("other")
-        company_link = soup.select_one("a.job-company-name")
+        company_link = soup.select_one("a.job-company-name, .head-template a.company")
 
         return {
             "source": SOURCE,

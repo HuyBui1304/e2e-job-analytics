@@ -1,0 +1,19 @@
+name: e2e-job
+services:
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address ":9001"
+    env_file: .env
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+volumes:
+  minio_data:
+networks:
+  default:
+    name: e2e_net
