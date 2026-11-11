@@ -6,7 +6,9 @@ from pyspark.sql import SparkSession
 PACKAGES = [
     "org.apache.hadoop:hadoop-aws:3.3.4",
     "com.amazonaws:aws-java-sdk-bundle:1.12.262",
+    "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.11.0",
 ]
+CATALOG = "my_catalog"
 
 
 def get_spark_session(app_name: str) -> SparkSession:
@@ -22,5 +24,9 @@ def get_spark_session(app_name: str) -> SparkSession:
         .config("spark.hadoop.fs.s3a.path.style.access", "true")
         .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+        .config(f"spark.sql.catalog.{CATALOG}", "org.apache.iceberg.spark.SparkCatalog")
+        .config(f"spark.sql.catalog.{CATALOG}.type", "hive")
+        .config(f"spark.sql.catalog.{CATALOG}.uri", os.environ["HIVE_METASTORE_URI"])
         .getOrCreate()
     )

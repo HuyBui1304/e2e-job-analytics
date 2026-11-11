@@ -12,8 +12,61 @@ services:
     volumes:
       - minio_data:/data
     restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    command: ["postgres", "-c", "password_encryption=md5"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+      HIVE_DB_PASSWORD: ${HIVE_DB_PASSWORD}
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  metastore:
+    image: apache/hive:3.1.3
+    platform: linux/amd64
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    env_file: .env
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+      HADOOP_CLASSPATH: /opt/hadoop/share/hadoop/tools/lib/*
+      SERVICE_OPTS: >-
+        -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
+        -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/metastore_db
+        -Djavax.jdo.option.ConnectionUserName=hive
+        -Djavax.jdo.option.ConnectionPassword=${HIVE_DB_PASSWORD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        export HADOOP_CLIENT_OPTS="-Xmx1G $$SERVICE_OPTS"
+        /opt/hive/bin/schematool -dbType postgres -info || /opt/hive/bin/schematool -dbType postgres -initSchema
+        exec /opt/hive/bin/hive --skiphadoopversion --skiphbasecp --service metastore
+    ports:
+      - "127.0.0.1:9083:9083"
+    volumes:
+      - ./docker/hive/core-site.xml:/opt/hive/conf/core-site.xml:ro
+    restart: unless-stopped
+
 volumes:
   minio_data:
+  pg_data:
 networks:
   default:
     name: e2e_net
