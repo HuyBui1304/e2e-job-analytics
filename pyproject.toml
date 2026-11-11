@@ -11,5 +11,6 @@ dependencies = [
     "beautifulsoup4>=4.15.0",
     "boto3>=1.43.126",
     "lxml>=6.1.3",
+    "pyspark==3.5.9",
     "seleniumbase>=4.57.0",
 ]
