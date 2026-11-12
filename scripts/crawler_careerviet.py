@@ -38,16 +38,23 @@ OTHER_LABELS = {
 
 def parse_boxes(soup) -> dict:
     out = {}
-    for item in soup.select(".detail-box li, .detail-box .map, .info-career ul.info li, tr:has(> td.name)"):
-        field = BOX_LABELS.get(norm(text_of(item, "td.name") or text_of(item, "strong, b")))
+    for icon in soup.select(".material-icons"):
+        icon.decompose()
+    items = ".detail-box li, .detail-box .map, .info-career ul.info li, tr:has(> td.name), .job-overview-item"
+    for item in soup.select(items):
+        label = text_of(item, "td.name") or text_of(item, ".overview-label") or text_of(item, "strong, b")
+        field = BOX_LABELS.get(norm(label))
         if not field or field in out:
             continue
         if field == "job_categories":
-            value = [a.get_text(" ", strip=True) for a in item.select("p a, .value a, td.content a")]
+            value = [a.get_text(" ", strip=True) for a in item.select("p a, .value a, td.content a, .overview-value a")]
         else:
-            value = text_of(item, "td.content") or text_of(item, "p, .value")
+            value = text_of(item, "td.content") or text_of(item, ".overview-value") or text_of(item, "p, .value")
         if value:
             out[field] = value
+    out.setdefault("place", text_of(soup, ".meta-location-text"))
+    out.setdefault("salary", text_of(soup, ".meta-salary"))
+    out = {k: v for k, v in out.items() if v}
     if out.get("salary"):
         out["salary"] = re.sub(r"^(lương|salary)\s*:\s*", "", out["salary"], flags=re.I)
     return out
