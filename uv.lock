@@ -271,6 +271,11 @@ dependencies = [
     { name = "seleniumbase" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.15.0" },
@@ -279,6 +284,9 @@ requires-dist = [
     { name = "pyspark", specifier = "==3.5.9" },
     { name = "seleniumbase", specifier = ">=4.57.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.1.1" }]
 
 [[package]]
 name = "exceptiongroup"
