@@ -64,6 +64,23 @@ services:
       - ./docker/hive/core-site.xml:/opt/hive/conf/core-site.xml:ro
     restart: unless-stopped
 
+  trino:
+    image: trinodb/trino:484
+    depends_on:
+      metastore:
+        condition: service_started
+      minio:
+        condition: service_started
+    env_file: .env
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+    mem_limit: 3g
+    ports:
+      - "127.0.0.1:8089:8080"
+    volumes:
+      - ./docker/trino/catalog:/etc/trino/catalog:ro
+    restart: unless-stopped
+
 volumes:
   minio_data:
   pg_data:
