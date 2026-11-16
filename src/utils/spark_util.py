@@ -7,6 +7,7 @@ PACKAGES = [
     "org.apache.hadoop:hadoop-aws:3.3.4",
     "com.amazonaws:aws-java-sdk-bundle:1.12.262",
     "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.11.0",
+    "org.postgresql:postgresql:42.7.7",
 ]
 CATALOG = "my_catalog"
 
@@ -18,6 +19,7 @@ def get_spark_session(app_name: str) -> SparkSession:
         .master("local[*]")
         .config("spark.jars.packages", ",".join(PACKAGES))
         .config("spark.sql.session.timeZone", "Asia/Ho_Chi_Minh")
+        .config("spark.driver.extraJavaOptions", "-Duser.timezone=Asia/Ho_Chi_Minh")
         .config("spark.hadoop.fs.s3a.endpoint", os.environ["MINIO_ENDPOINT"])
         .config("spark.hadoop.fs.s3a.access.key", os.environ["MINIO_ROOT_USER"])
         .config("spark.hadoop.fs.s3a.secret.key", os.environ["MINIO_ROOT_PASSWORD"])

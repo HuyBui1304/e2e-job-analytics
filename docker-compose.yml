@@ -81,9 +81,28 @@ services:
       - ./docker/trino/catalog:/etc/trino/catalog:ro
     restart: unless-stopped
 
+  postgres-serving:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${SERVING_DB_USER}
+      POSTGRES_PASSWORD: ${SERVING_DB_PASSWORD}
+      POSTGRES_DB: ${SERVING_DB_NAME}
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "127.0.0.1:5435:5432"
+    volumes:
+      - pg_serving_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   minio_data:
   pg_data:
+  pg_serving_data:
 networks:
   default:
     name: e2e_net
