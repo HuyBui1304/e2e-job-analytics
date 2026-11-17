@@ -99,6 +99,34 @@ services:
       retries: 10
     restart: unless-stopped
 
+  spark-job:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    image: e2e-job/spark:latest
+    profiles: ["jobs"]
+    env_file: .env
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+      MINIO_ENDPOINT: http://minio:9000
+      HIVE_METASTORE_URI: thrift://metastore:9083
+      SERVING_DB_URL: jdbc:postgresql://postgres-serving:5432/serving_db
+
+  crawler:
+    build:
+      context: .
+      dockerfile: docker/crawler/Dockerfile
+    image: e2e-job/crawler:latest
+    platform: linux/amd64
+    profiles: ["jobs"]
+    env_file: .env
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+      MINIO_ENDPOINT: http://minio:9000
+    shm_size: 2gb
+    volumes:
+      - ./data:/app/data
+
 volumes:
   minio_data:
   pg_data:

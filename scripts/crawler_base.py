@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import random
 import re
 from datetime import date
@@ -13,6 +14,7 @@ from src.utils.minio_client import get_s3
 DEBUG_DIR = Path("data/debug")
 LANDING_DIR = Path("data/landing")
 CHALLENGE_TITLES = ("just a moment", "chờ một chút", "xác minh", "verify")
+IN_DOCKER = os.environ.get("IN_DOCKER") == "1"
 
 
 def norm(text: str | None) -> str:
@@ -110,7 +112,7 @@ class BaseCrawler:
         for attempt in range(1, self.open_retries + 1):
             try:
                 self.sb.uc_open_with_reconnect(url, 4)
-                if self.is_challenge() and not (manual and self.wait_for_human()):
+                if self.is_challenge() and not (manual and not IN_DOCKER and self.wait_for_human()):
                     print(f"  Bị chặn (lần {attempt}/{self.open_retries}), nghỉ {60 * attempt}s")
                     self.sb.sleep(60 * attempt)
                     continue
@@ -247,5 +249,5 @@ def main(crawler_cls: type[BaseCrawler]) -> None:
         print(json.dumps(job, ensure_ascii=False, indent=2))
         return
 
-    with SB(uc=True, locale_code="vi") as sb:
+    with SB(uc=True, locale_code="vi", xvfb=IN_DOCKER) as sb:
         crawler_cls(sb).run(args.date, limit=args.limit or None, max_pages=args.max_pages)
