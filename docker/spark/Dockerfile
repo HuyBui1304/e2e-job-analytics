@@ -25,3 +25,4 @@ RUN python -c "from pyspark.sql import SparkSession; from src.utils.spark_util i
 
 COPY src/ ./src/
 COPY config/ ./config/
+COPY scripts/ ./scripts/
